@@ -1,2 +1,2 @@
-# perlutils
+# perllib
 Useful Perl library routines
