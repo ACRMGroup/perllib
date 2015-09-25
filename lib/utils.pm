@@ -192,6 +192,7 @@ sub CheckFile
 }
 
 
+#-------------------------------------------------------------------------
 sub parseFilename
 {
     my($infile, $longext) = @_;
@@ -241,6 +242,7 @@ sub parseFilename
     return($path, $filename, $filestem, $extension);
 }
 
+#-------------------------------------------------------------------------
 sub setExtension
 {
     my($infile, $ext, $longext) = @_;
@@ -270,6 +272,7 @@ sub setExtension
     return($outfile);
 }
 
+#-------------------------------------------------------------------------
 sub ReadFileHandleAsTwoColumnHashRef
 {
     my ($fh)   = @_;
@@ -290,39 +293,5 @@ sub ReadFileHandleAsTwoColumnHashRef
 
     return(\%result);
 }
-
-sub sortResids
-{
-    my @resids = @_;
-
-    return(sort residSortFunc @resids);
-}
-
-sub parseResid
-{
-    my($resid) = @_;
-    $resid =~ /([LH])(\d+)([A-Za-z]?)/;
-    return($1, $2, $3);
-}
-
-sub residSortFunc
-{
-    return(0) if($a eq $b);
-
-    $a =~ /([LH])(\d+)([A-Za-z]?)/;
-    my ($aC, $aN, $aI) = ($1, $2, $3);
-    
-    $b =~ /([LH])(\d+)([A-Za-z]?)/;
-    my ($bC, $bN, $bI) = ($1, $2, $3);
-
-    return(-1) if($aC lt $bC);
-    return(+1) if($aC gt $bC);
-    return(-1) if($aN <  $bN);
-    return(+1) if($aN >  $bN);
-    return(-1) if($aI lt $bI);
-    
-    return(1);
-}
-
 
 1;
