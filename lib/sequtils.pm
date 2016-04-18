@@ -99,21 +99,52 @@ sub sortResids
 sub parseResid
 {
     my($resid) = @_;
-    $resid =~ /([LH])(\d+)([A-Za-z]?)/;
-    return($1, $2, $3);
+    if($resid =~ /([A-Za-z])(\d+)([A-Za-z]?)/)
+    {
+        return($1, $2, $3);
+    }
+    if($resid =~ /([0-9])\.(\d+)([A-Za-z]?)/)
+    {
+        return($1, $2, $3);
+    }
+    return('','','');
 }
 
 #*************************************************************************
+# 18.04.16 Updated to work with any single-character chains, not just LH
 sub residSortFunc
 {
     return(0) if($a eq $b);
 
-    $a =~ /([LH])(\d+)([A-Za-z]?)/;
-    my ($aC, $aN, $aI) = ($1, $2, $3);
-    
-    $b =~ /([LH])(\d+)([A-Za-z]?)/;
-    my ($bC, $bN, $bI) = ($1, $2, $3);
+    my($aC, $aN, $aI);
+    my($bC, $bN, $bI);
 
+    if($a =~ /([A-Za-z])(\d+)([A-Za-z]?)/)
+    {
+        ($aC, $aN, $aI) = ($1, $2, $3);
+    }
+    elsif($a =~ /([0-9])\.(\d+)([A-Za-z]?)/)
+    {
+        ($aC, $aN, $aI) = ($1, $2, $3);
+    }
+    else
+    {
+        ($aC, $aN, $aI) = ('', '', '');
+    }
+    
+    if($b =~ /([A-Za-z])(\d+)([A-Za-z]?)/)
+    {
+        ($bC, $bN, $bI) = ($1, $2, $3);
+    }
+    elsif($b =~ /([0-9])\.(\d+)([A-Za-z]?)/)
+    {
+        ($bC, $bN, $bI) = ($1, $2, $3);
+    }
+    else
+    {
+        ($bC, $bN, $bI) = ('', '', '');
+    }
+    
     return(-1) if($aC lt $bC);
     return(+1) if($aC gt $bC);
     return(-1) if($aN <  $bN);
