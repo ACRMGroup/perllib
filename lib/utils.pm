@@ -4,11 +4,11 @@ package utils;
 #   Program:    
 #   File:       utils.pm
 #   
-#   Version:    V1.0
-#   Date:       01.05.15
+#   Version:    V1.1
+#   Date:       17.05.16
 #   Function:   
 #   
-#   Copyright:  (c) Dr. Andrew C. R. Martin, UCL, 2015
+#   Copyright:  (c) Dr. Andrew C. R. Martin, UCL, 2015-2016
 #   Author:     Dr. Andrew C. R. Martin
 #   Address:    Institute of Structural and Molecular Biology
 #               Division of Biosciences
@@ -48,6 +48,7 @@ package utils;
 #   Revision History:
 #   =================
 #   V1.0   01.05.15 Original   By: ACRM
+#   V1.1   17.05.16 Added intellisplit()
 #
 #*************************************************************************
 use File::Basename;
@@ -292,6 +293,56 @@ sub ReadFileHandleAsTwoColumnHashRef
     }
 
     return(\%result);
+}
+
+#-------------------------------------------------------------------------
+# @fields = intellisplit($string)
+# -------------------------------
+# Like split but allows single or double inverted commas to wrap a string
+# including spaces. (Double inverted commas may be contained in a pair
+# of single inverted commas and vice versa.) It only splits at a normal 
+# space, not at tabs.
+#
+# 17.05.16 Original   By: ACRM
+
+sub intellisplit
+{
+    my($input) = @_;
+    my @in = split(//, $input);
+    my $inDic = 0;
+    my $inSic = 0;
+    my @output = ();
+    my $string = '';
+
+    foreach my $char (@in)
+    {
+        if($char eq '"')
+        {
+            if(!$inSic)
+            {
+                $inDic = $inDic?0:1;
+            }
+            $string .= $char;
+        }
+        elsif($char eq "'")
+        {
+            if(!$inDic)
+            {
+                $inSic = $inSic?0:1;
+            }
+            $string .= $char;
+        }
+        elsif(($char eq ' ') && !($inDic || $inSic))
+        {
+            push @output, $string;
+            $string = '';
+        }
+        else
+        {
+            $string .= $char;
+        }
+    }
+    return(@output);
 }
 
 1;
