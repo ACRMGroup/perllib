@@ -342,6 +342,8 @@ sub intellisplit
             $string .= $char;
         }
     }
+    push @output, $string;
+
     return(@output);
 }
 
