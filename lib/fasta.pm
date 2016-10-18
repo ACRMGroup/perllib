@@ -103,18 +103,66 @@ sub ReadFasta
 }
 
 #*************************************************************************
+# if $header is blank, then no header is printed
+# $width, $break and $number are optional
+# $width  specifies the number of residues per line
+# $break  specifies that there should be a space after every 10 residues
+# $number specifies that a number should be printed at the end of each
+#         line
+# 18.01.16 Added $break and $number
 sub PrintFasta
 {
-    my($fh, $header, $seq, $width) = @_;
-    $width = 60 if(!defined($width) || ($width == 0));
+    my($fh, $header, $seq, $width, $break, $number) = @_;
+    $width  = 60 if(!defined($width) || ($width == 0));
+    $break  =  0 if(!defined($break));
+    $number =  0 if(!defined($number));
 
-    print $fh "$header\n";
+    my $totalChar = 0;
+
+    if($header ne '')
+    {
+        print ">$header\n";
+    }
+
+    my $nchar = 0;
     while(length($seq))
     {
-        print $fh substr($seq, 0, $width) . "\n";
-        $seq = substr($seq, $width);
+        print $fh substr($seq, 0, 1);
+        $nchar++;
+        $totalChar++;
+        if(!($nchar%$width))
+        {
+            print " $totalChar" if($number);
+            print "\n";
+            $nchar = 0;
+        }
+        print ' ' if($break && $nchar && !($nchar%10));
+
+        $seq = substr($seq,1);
     }
+
+    if($nchar)
+    {
+        if($number)
+        {
+            if($break)
+            {
+                my $printWidth = $width + (($width-1) / 10);
+                my $usedWidth  = $nchar + (($nchar-1) / 10);
+                my $nSpaces    = $printWidth - $usedWidth;
+                print " " x $nSpaces;
+            }
+            else
+            {
+                print " " x ($width - $nchar);
+            }
+            print " $totalChar";
+        }
+        print "\n";
+    }
+
 }
+
 
 #*************************************************************************
 sub GetFastaID
