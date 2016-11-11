@@ -3,11 +3,11 @@ package config;
 #
 #   File:       config.pm
 #   
-#   Version:    V1.0
-#   Date:       29.04.15
+#   Version:    V1.1
+#   Date:       11.11.16
 #   Function:   Functions to read a config file
 #   
-#   Copyright:  (c) Dr. Andrew C. R. Martin, UCL, 2015
+#   Copyright:  (c) Dr. Andrew C. R. Martin, UCL, 2015-2016
 #   Author:     Dr. Andrew C. R. Martin
 #   Address:    Institute of Structural and Molecular Biology
 #               Division of Biosciences
@@ -47,6 +47,8 @@ package config;
 #   Revision History:
 #   =================
 #   V1.0  29.04.15  Original   By: ACRM
+#   V1.1  11.11.16  Added functions for manipulating files (performing
+#                   substitutions, etc.)
 #
 #*************************************************************************
 use utils;
@@ -196,6 +198,96 @@ sub SetConfig
     }
 
     $$hConfig{$key} = $value;
+}
+
+#*************************************************************************
+#> ttSubstitute($inFile, $outFile, %config)
+#  ----------------------------------------
+#  Performs a Perl-Template-Toolkit style substitution of variables in
+#  $inFile specified as [%variable%], writing to $outFile.
+#  The variables to be substituted are stored in %config as
+#     %config{variable} = value
+#  This %config hash can be generated using config::ReadConfig()
+#
+#  11.11.16 Original   By: ACRM
+sub ttSubstitute
+{
+    my($in, $out, %config) = @_;
+
+    if(CheckOverwrite($out))
+    {
+        if(open(my $infp, '<', $in))
+        {
+            if(open(my $outfp, '>', $out))
+            {
+                while(<$infp>)
+                {
+                    s/\[\%(.*?)\%\]/$config{$1}/g;
+                    print $outfp "$_";
+                }
+                close $outfp;
+            }
+            else
+            {
+                utils::mydie("Cannot write to $out. Configure failed.");
+            }
+        
+            close $infp;
+        }
+        else
+        {
+            utils::mydie("$in does not exist. Configure failed.");
+        }
+    }
+}
+
+
+#*************************************************************************
+#> linkfile($in, $out)
+#  -------------------
+#  linkfile() creates a symbolic link, but checks if the input file exists
+#  first (and exits if it doesn't) and also checks if the output link or
+#  file exists and sees if you wish to overwrite it
+#
+#  11.11.16 Original   By: ACRM
+sub linkfile
+{
+    my($in, $out) = @_;
+    if( ! -e $in )
+    {
+        utils::mydie("$in does not exist. Configure failed.");
+    }
+
+    if(CheckOverwrite($out))
+    {
+        `ln -s $in $out`;
+    }
+}
+
+
+#*************************************************************************
+#> $ok = CheckOverwrite($file)
+#  ---------------------------
+#  Checks if a file exists and whether you wish to overwrite it if it 
+#  does. Returns a boolean to indicate whether it should be overwritten.
+#
+#  11.11.16 Original   By: ACRM
+sub CheckOverwrite
+{
+    my($file) = @_;
+    
+    if( -e $file )
+    {
+        print "$file exists already. Overwrite? (Y/N)[Y]: ";
+        my $yorn = <>;
+        chomp $yorn;
+        if(($yorn ne "n") && ($yorn ne "N"))
+        {
+            `\\rm -f $file`;
+        }
+    }
+
+    return(!(-e $file));
 }
 
 1;
