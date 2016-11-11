@@ -49,6 +49,7 @@ package config;
 #   V1.0  29.04.15  Original   By: ACRM
 #   V1.1  11.11.16  Added functions for manipulating files (performing
 #                   substitutions, etc.)
+#                   ParseConfig() now handles embedded commands
 #
 #*************************************************************************
 use utils;
@@ -162,6 +163,7 @@ sub ExportConfig
 #  This routine is not normally used by calling code.
 #
 #  29.04.15 Original   By: ACRM
+#  11.11.16 Added handling of `` commands
 #
 sub SetConfig
 {
@@ -171,6 +173,14 @@ sub SetConfig
     $value =~ s/^\'//;
     $value =~ s/\"$//;          # Remove inverted commas at the end
     $value =~ s/\'$//;
+
+    while($value =~ /`(.*?)`/)  # Value contains a command
+    {
+        my $cmd    = $1;        # Extract the command
+        my $result = `$cmd`;    # Run the command
+        chomp $result;
+        $value =~ s/`${cmd}`/$result/; # Substitute the command
+    }
 
     while($value =~ /(\${.*?})/) # Value contains a variable
     {
