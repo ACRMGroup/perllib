@@ -48,7 +48,8 @@ package config;
 #   =================
 #   V1.0  29.04.15  Original   By: ACRM
 #   V1.1  11.11.16  Added functions for manipulating files (performing
-#                   substitutions, etc.)
+#                   substitutions, etc.). Also supports commands within
+#                   assignments (e.g. `pwd`)
 #
 #*************************************************************************
 use utils;
@@ -72,11 +73,17 @@ use FindBin;
 #     key = value
 #  The spaces around the '=' are optional and the value may be contained
 #  in double inverted commas
+#
 #  The value can contain a previously-set variable, but this must be
 #  enclosed in {}. For example:
 #     key = ${prevvalue}/value
 #  Previously set values may be set within the confirguration file or
 #  may be environment variables set elsewhere.
+#
+#  The value may also contain executable code in backticks so you 
+#  can do things like:
+#     file="`pwd`/logs/logfile.txt"
+#  Note that variables are expanded before executable code is run
 #
 #  29.04.15 Original   By: ACRM
 sub ReadConfig
@@ -159,9 +166,14 @@ sub ExportConfig
 #  variables of the form ${variable} taking these first from previous
 #  config settings and if this fails from environment variables
 #
+#  The code also allows executable programs within assignment.
+#  For example PWD="`pwd`"
+#  Note that variables are expanded before executable code is run
+#
 #  This routine is not normally used by calling code.
 #
 #  29.04.15 Original   By: ACRM
+#  16.11.16 Added `exe` support
 #
 sub SetConfig
 {
@@ -195,6 +207,14 @@ sub SetConfig
             $subval = $$hConfig{$subkey};
         }
         $value =~ s/\${$subkey}/$subval/g;
+    }
+
+    while($value =~ /`(.*)`/)
+    {
+        my $exe    = $1;
+        my $result = `$exe`;
+        chomp $result;
+        $value =~ s/`$exe`/$result/;
     }
 
     $$hConfig{$key} = $value;
