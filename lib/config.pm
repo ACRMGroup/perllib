@@ -173,7 +173,7 @@ sub ExportConfig
 #  This routine is not normally used by calling code.
 #
 #  29.04.15 Original   By: ACRM
-#  16.11.16 Added `exe` support
+#  11.11.16 Added handling of `` commands
 #
 sub SetConfig
 {
@@ -209,12 +209,12 @@ sub SetConfig
         $value =~ s/\${$subkey}/$subval/g;
     }
 
-    while($value =~ /`(.*)`/)
+    while($value =~ /`(.*?)`/)  # Value contains a command
     {
-        my $exe    = $1;
-        my $result = `$exe`;
+        my $cmd    = $1;        # Extract the command
+        my $result = `$cmd`;    # Run the command
         chomp $result;
-        $value =~ s/`$exe`/$result/;
+        $value =~ s/`${cmd}`/$result/; # Substitute the command
     }
 
     $$hConfig{$key} = $value;
