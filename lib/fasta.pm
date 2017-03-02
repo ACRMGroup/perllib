@@ -186,4 +186,21 @@ sub GetFastaID
     return($text);
 }
 
+# Reads the first sequence from a FASTA file
+sub ReadFastaFileFirstSequence
+{
+    my($file) = @_;
+    my $sequence = '';
+
+    if(open(my $fp, '<', $file))
+    {
+        ($id, $info, $sequence) = ReadFasta($fp);
+        close $fp;
+    }
+
+    return($id, $info, $sequence);
+}
+
+
+
 1;
