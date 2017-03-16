@@ -110,6 +110,7 @@ sub ReadFasta
 # $number specifies that a number should be printed at the end of each
 #         line
 # 18.01.16 Added $break and $number
+# 16.03.17 All prints done to $fh as the should have been!
 sub PrintFasta
 {
     my($fh, $header, $seq, $width, $break, $number) = @_;
@@ -121,7 +122,7 @@ sub PrintFasta
 
     if($header ne '')
     {
-        print ">$header\n";
+        print $fh ">$header\n";
     }
 
     my $nchar = 0;
@@ -132,11 +133,11 @@ sub PrintFasta
         $totalChar++;
         if(!($nchar%$width))
         {
-            print " $totalChar" if($number);
-            print "\n";
+            print $fh " $totalChar" if($number);
+            print $fh "\n";
             $nchar = 0;
         }
-        print ' ' if($break && $nchar && !($nchar%10));
+        print $fh ' ' if($break && $nchar && !($nchar%10));
 
         $seq = substr($seq,1);
     }
@@ -150,15 +151,15 @@ sub PrintFasta
                 my $printWidth = $width + (($width-1) / 10);
                 my $usedWidth  = $nchar + (($nchar-1) / 10);
                 my $nSpaces    = $printWidth - $usedWidth;
-                print " " x $nSpaces;
+                print $fh " " x $nSpaces;
             }
             else
             {
-                print " " x ($width - $nchar);
+                print $fh " " x ($width - $nchar);
             }
-            print " $totalChar";
+            print $fh " $totalChar";
         }
-        print "\n";
+        print $fh "\n";
     }
 
 }
