@@ -185,7 +185,7 @@ sub translateThree
         }
     }
     
-    return($aaSeq[$bestSeq]));
+    return($aaSeq[$bestSeq]);
 }
 
 
