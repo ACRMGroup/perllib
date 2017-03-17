@@ -148,6 +148,15 @@ sub translateOne
 
 
 #*************************************************************************
+sub truncateSequence
+{
+    my ($seq) = @_;
+    $seq =~ s/^\*+//;           # Remove any leading stop codons
+    $seq =~ s/\*.*//;           # Truncate at first stop
+    return($seq);
+}
+
+#*************************************************************************
 sub translateThree
 {
     my ($dna) = @_;
@@ -166,18 +175,21 @@ sub translateThree
         for(my $i=0; $i<length($dna); $i+=3)
         {
             my $codon = substr($dna, $i, 3);
-            if(defined($translateHash{$codon}))
+            if(length($codon) == 3)
             {
-                $aaSeq[$frame] .= $translateHash{$codon};
-            }
-            else
-            {
-                $aaSeq[$frame] .= '?';
+                if(defined($translateHash{$codon}))
+                {
+                    $aaSeq[$frame] .= $translateHash{$codon};
+                }
+                else
+                {
+                    $aaSeq[$frame] .= '?';
+                }
             }
         }
 
         my $testSeq = $aaSeq[$frame];
-        $testSeq =~ s/\*.*//;
+        $testSeq = truncateSequence($testSeq);
         if(length($testSeq) > $bestLen)
         {
             $bestLen = length($testSeq);
