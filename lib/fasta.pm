@@ -54,11 +54,20 @@ package fasta;
 #   V1.0   05.11.13   Original   By: ACRM
 #
 #*************************************************************************
-$::RFPrevHeader = "";
+$::_RFPrevHeader = "";
 #*************************************************************************
 sub ReadFasta
 {
     my($fp) = @_;
+
+    my($id, $info, $seq) = ReadFastaContext($fp, \$::_RFPrevHeader);
+    return($id, $info, $seq);
+}
+
+#*************************************************************************
+sub ReadFastaContext
+{
+    my($fp, $pRFPrevHeader) = @_;
 
     my $seq = "";
     while(<$fp>)
@@ -70,15 +79,15 @@ sub ReadFasta
         {
             if(/^>/)
             {
-                if($::RFPrevHeader eq "")
+                if($$pRFPrevHeader eq "")
                 {
-                    $::RFPrevHeader = $_;
+                    $$pRFPrevHeader = $_;
                 }
                 else
                 {
-                    my $id = GetFastaID($::RFPrevHeader);
-                    my $info = $::RFPrevHeader;
-                    $::RFPrevHeader = $_;
+                    my $id = GetFastaID($$pRFPrevHeader);
+                    my $info = $$pRFPrevHeader;
+                    $$pRFPrevHeader = $_;
                     return($id, $info, $seq);
                 }
             }
@@ -90,14 +99,14 @@ sub ReadFasta
         }
     }
 
-    if($::RFPrevHeader eq "")
+    if($$pRFPrevHeader eq "")
     {
         return("","","");
     }
 
-    my $id = GetFastaID($::RFPrevHeader);
-    my $info = $::RFPrevHeader;
-    $::RFPrevHeader = "";
+    my $id = GetFastaID($$pRFPrevHeader);
+    my $info = $$pRFPrevHeader;
+    $$pRFPrevHeader = "";
 
     return($id, $info, $seq);
 }
@@ -195,8 +204,8 @@ sub ReadFastaFileFirstSequence
 
     if(open(my $fp, '<', $file))
     {
-        $::RFPrevHeader = '';
-        ($id, $info, $sequence) = ReadFasta($fp);
+        my $context = '';
+        ($id, $info, $sequence) = ReadFastaContext($fp, $context);
         close $fp;
     }
 
