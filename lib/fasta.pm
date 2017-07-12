@@ -195,6 +195,7 @@ sub ReadFastaFileFirstSequence
 
     if(open(my $fp, '<', $file))
     {
+        $::RFPrevHeader = '';
         ($id, $info, $sequence) = ReadFasta($fp);
         close $fp;
     }
