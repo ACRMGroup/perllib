@@ -206,7 +206,7 @@ sub ReadFastaFileFirstSequence
     if(open(my $fp, '<', $file))
     {
         my $context = '';
-        ($id, $info, $sequence) = ReadFastaContext($fp, $context);
+        ($id, $info, $sequence) = ReadFastaContext($fp, \$context);
         close $fp;
     }
 
