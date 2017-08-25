@@ -199,9 +199,10 @@ sub GetFastaID
 # Reads the first sequence from a FASTA file
 sub ReadFastaFileFirstSequence
 {
-    my($file) = @_;
+    my($file)    = @_;
     my $sequence = '';
-
+    my $id       = '';
+    my $info     = '';
     if(open(my $fp, '<', $file))
     {
         my $context = '';
