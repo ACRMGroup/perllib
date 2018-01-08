@@ -93,11 +93,12 @@ sub ReadConfig
 
     if(! -e $file)
     {
-        $file = "$FindBin::Bin/$file";
-        if(! -e $file)
+        my $newfile = "$FindBin::Bin/$file";
+        if(! -e $newfile)
         {
             utils::mydie("Config file does not exist: $file", 0);
         }
+        $file = $newfile;
     }
 
     if(open(my $fp, '<', $file))
