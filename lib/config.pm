@@ -185,12 +185,12 @@ sub SetConfig
     $value =~ s/\"$//;          # Remove inverted commas at the end
     $value =~ s/\'$//;
 
-    while($value =~ /(\${.*?})/) # Value contains a variable
+    while($value =~ /(\$\{.*?})/) # Value contains a variable
     {
         my $subkey = $1;
         my $subval = '';
-        $subkey =~ s/\${//;     # Remove ${
-        $subkey =~ s/}//;       # Remove }
+        $subkey =~ s/\$\{//;     # Remove ${
+        $subkey =~ s/\}//;       # Remove }
         if(!defined($$hConfig{$subkey}))
         {
             if(defined($ENV{$subkey}))
@@ -207,7 +207,7 @@ sub SetConfig
         {
             $subval = $$hConfig{$subkey};
         }
-        $value =~ s/\${$subkey}/$subval/g;
+        $value =~ s/\$\{$subkey\}/$subval/g;
     }
 
     while($value =~ /`(.*?)`/)  # Value contains a command
@@ -215,7 +215,7 @@ sub SetConfig
         my $cmd    = $1;        # Extract the command
         my $result = `$cmd`;    # Run the command
         chomp $result;
-        $value =~ s/`${cmd}`/$result/; # Substitute the command
+        $value =~ s/`$\{cmd\}`/$result/; # Substitute the command
     }
 
     $$hConfig{$key} = $value;
