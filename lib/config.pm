@@ -215,7 +215,7 @@ sub SetConfig
         my $cmd    = $1;        # Extract the command
         my $result = `$cmd`;    # Run the command
         chomp $result;
-        $value =~ s/`$\{cmd\}`/$result/; # Substitute the command
+        $value =~ s/`\$\{cmd\}`/$result/; # Substitute the command
     }
 
     $$hConfig{$key} = $value;
