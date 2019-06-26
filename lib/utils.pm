@@ -725,15 +725,15 @@ sub BuildPackage
 
     if($needsToRun)
     {
-        util::RunCommand("tar -zxvf $package");
+        utils::RunCommand("tar -zxvf $package");
         my $packageDir = $package;
         $packageDir =~ s/.*\///;
         $packageDir =~ s/\.tgz//;
-        util::RunCommand("cd $packageDir/$subdir; make");
+        utils::RunCommand("cd $packageDir/$subdir; make");
         foreach my $exe (@$$aExe)
         {
-            util::RunCommand("mkdir -p $binDir") if(! -d $binDir);
-            util::RunCommand("cp $packageDir/$subdir/$exe $binDir");
+            utils::RunCommand("mkdir -p $binDir") if(! -d $binDir);
+            utils::RunCommand("cp $packageDir/$subdir/$exe $binDir");
 
             if(! -e "$binDir/$exe")
             {
@@ -742,12 +742,12 @@ sub BuildPackage
         }
         if($dataDir ne "")
         {
-            util::RunCommand("mkdir -p $dataDest") if(! -d $dataDest);
-            util::RunCommand("cp -R $packageDir/$dataDir/* $dataDest");
+            utils::RunCommand("mkdir -p $dataDest") if(! -d $dataDest);
+            utils::RunCommand("cp -R $packageDir/$dataDir/* $dataDest");
         }
         if($postBuild ne "")
         {
-            util::RunCommand($postBuild);
+            utils::RunCommand($postBuild);
         }
         `rm -rf $packageDir`;
     }
