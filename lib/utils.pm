@@ -4,12 +4,12 @@ package utils;
 #   Program:    
 #   File:       utils.pm
 #   
-#   Version:    V1.1
-#   Date:       17.05.16
+#   Version:    V1.2
+#   Date:       26.06.19
 #   Function:   
 #   
-#   Copyright:  (c) Dr. Andrew C. R. Martin, UCL, 2015-2016
-#   Author:     Dr. Andrew C. R. Martin
+#   Copyright:  (c) Prof. Andrew C. R. Martin, UCL, 2015-2019
+#   Author:     Prof. Andrew C. R. Martin
 #   Address:    Institute of Structural and Molecular Biology
 #               Division of Biosciences
 #               University College
@@ -49,6 +49,7 @@ package utils;
 #   =================
 #   V1.0   01.05.15 Original   By: ACRM
 #   V1.1   17.05.16 Added intellisplit()
+#   V1.2   26.06.19 Added various functions from abYmod util.pm
 #
 #*************************************************************************
 use File::Basename;
@@ -345,6 +346,537 @@ sub intellisplit
     push @output, $string;
 
     return(@output);
+}
+
+#*************************************************************************
+# my ($filename, $stem) = utils::BuildFileName($inFile, $dir, $ext)
+# -----------------------------------------------------------------
+# Input:   text  $inFile    Input filename (maybe with a path)
+#          text  $dir       Required path
+#          text  $ext       Required extension
+# Returns  text  $filename  New filename
+#          text  $stem      The filestem
+#
+# Builds a filename by discarding the path and extension from an input 
+# filename and adding new path and extension
+#
+# For some odd reason /\..*?$/ doesn't properly do a non-greedy match -
+# it matches from the first '.' instead of the last '.'. Consequently 
+# the code to remove te extension has to do a greedy match on the first
+# part of the string and substitute that for the whole thing
+#
+#  19.09.13  Original  By: ACRM
+sub BuildFileName
+{
+    my($inFile, $dir, $ext) = @_;
+
+    my $stem = $inFile;
+    $stem =~ s/(.*)\..*?$/$1/;           # Remove extension
+    $stem =~ s/.*\///;                   # Remove path
+
+    chop $dir if($dir =~ /\/$/);         # Remove / from end of path
+    $ext = ".$ext" if(!($ext =~ /^\./)); # Prepend . to extension if needed
+
+    my $outFile = "$dir/$stem$ext";      # Construct filename
+
+    return($outFile, $stem);
+}
+
+#*************************************************************************
+#> $tmpDir = CreateTempDir($pName)
+#  -------------------------------
+#  Input:   string   $pName    Directory base name
+#  Return:  string             Full created directory name
+#
+#  Create a temporary directory. The time is appended to the filestem
+#  and this is placed in the directory named in $config::tmp
+#
+#  19.09.13  Original  By: ACRM
+sub CreateTempDir
+{
+    my ($pName) = @_;
+    my $tmpDir = $config::tmp . "/${pName}_$$" . "_" . time;
+    $tmpDir =~ s/\/\//\//g; # Replace // with /
+    `mkdir -p $tmpDir`;
+    if(! -d $tmpDir)
+    {
+        return(undef);
+    }
+    return($tmpDir);
+}
+
+#*************************************************************************
+# @files = GetFileList($dir, $type, $prepend)
+# -------------------------------------------
+# Input:   string   $dir      A directory path
+#          string   $type     A file extension (or blank)
+#          BOOL     $prepend  Prepend the directory path onto the filenames
+# Returns: string[]           List of filenames
+#
+# This function gets a list of filenames from a directory which have the
+# specified extension - strictly this is just text that the filename must
+# contain - if it really must be an extension then it needs to end with a $
+# (end of string marker).
+# By default, the filenames are returned without the path information.
+# If $prepend is set, then the path is prepended onto each filename
+#
+#  19.09.13  Original  By: ACRM
+sub GetFileList
+{
+    my($dir, $type, $prepend) = @_;
+    my @files = ();
+
+    chop $dir if($dir =~ /\/$/);
+
+    if(opendir(my $dh, $dir))
+    {
+        @files = grep(!/^\./, readdir($dh));
+        if($type ne "")
+        {
+            @files = grep(/$type/, @files);
+        }
+        closedir($dh);
+    }
+    if($prepend)
+    {
+        foreach my $file (@files)
+        {
+            $file = "$dir/$file";
+        }
+    }
+    return(sort(@files));
+}
+
+#*************************************************************************
+#> BOOL FileNewer($testFile, $refFile)
+#  -----------------------------------
+#  Input:   string   $testFile   File of which to check date
+#           string   $refFile    Reference file against which we compare
+#  Returns: BOOL                 True if either file does not exist or
+#                                if $testFile is newer than $refFile
+#
+#  Tests whether $testFile is newer than $refFile
+#
+#  19.09.13  Original  By: ACRM
+sub FileNewer
+{
+    my($testFile, $refFile) = @_;
+
+    return(1) if((! -e $testFile) || (! -e $refFile));
+
+    my @stats;
+    @stats = stat($testFile);
+    my $testDate = $stats[9];
+    @stats = stat($refFile);
+    my $refDate = $stats[9];
+
+    return((($testDate > $refDate)?1:0));
+}
+
+#*************************************************************************
+#> void CheckAndDie($path, $isDir, $text)
+#  --------------------------------------
+#  Input:   string   $path   Path to a directory or file
+#           BOOL     $isDir  $path is a directory
+#           string   $text   Text message
+#
+#  Tests whether $path is a directory or file (depending on $isDir) and
+#  if it isn't what it is supposed to be, prints a message including $text
+#  and dies
+#
+#  19.09.13  Original  By: ACRM
+sub CheckAndDie
+{
+    my($path, $isDir, $text) = @_;
+    my $ok = 1;
+    if($isDir)
+    {
+        $ok = 0 if(! -d $path);
+    }
+    else
+    {
+        $ok = 0 if(! -f $path);
+    }
+
+    if(!$ok)
+    {
+        mydie("\nabYmod configuration/installation error: $text doesn't exist:\n   $path\n\n");
+    }
+}
+
+#*************************************************************************
+#> %hash = BuildTwoColumnHash(@array)
+#  ----------------------------------
+#  Input:   string[]   @array    An array of strings of the form 'X Y'
+#  Returns: hash                 A hash where X is the key and Y the value
+#
+#  Builds a hash from an array containing strings with two columns. 
+#  NOTE! - If items in the first column (X) are repeated, then the last occurrence
+#          will be used as the stored value
+#        - If the string contains more than two columns, then only the second
+#          column will be stored (i.e. 'X Y Z' will use X as a key for Y and Z
+#          will be discarded.
+#
+#
+#  19.09.13  Original  By: ACRM
+sub BuildTwoColumnHash
+{
+    my @records = @_;
+    my %resultHash = ();
+    foreach my $line (@records)
+    {
+        chomp $line;
+        my @fields = split(/\s+/, $line);
+        $resultHash{$fields[0]} = $fields[1];
+    }
+    return(%resultHash);
+}
+
+#*************************************************************************
+#> BOOL inlist($item, @list)
+#  -------------------------
+#  Input:   string   $item    An item for which to search
+#           string[] @list    An array
+#  Return:  BOOL              Was $item in the array?
+#
+#  Tests whether an item appears in the array
+#
+#  19.09.13  Original  By: ACRM
+sub inlist
+{
+    my($item, @list) = @_;
+    foreach my $listItem (@list)
+    {
+        if($item eq $listItem)
+        {
+            return(1);
+        }
+    }
+    return(0);
+}
+
+#*************************************************************************
+# @textArray = ReadFileAsArray($inFile)
+# -------------------------------------
+# Input:   text   $inFile    A file name to be read
+# Returns: text[]            An array of lines from the file
+#
+#  19.09.13  Original  By: ACRM
+sub ReadFileAsArray
+{
+    my($inFile) = @_;
+    my @contents = ();
+
+    if(open(my $fp, $inFile))
+    {
+        while(<$fp>)
+        {
+            chomp;
+            s/\r//;
+            push @contents, $_;
+        }
+        close $fp;
+    }
+    return(@contents);
+}
+
+#*************************************************************************
+#> void RunCommand($exe, $useSystem)
+#  ---------------------------------
+#  Input:   string  $exe    An excutable string
+#
+#  Runs a command
+#  19.09.13  Original  By: ACRM
+#  28.09.15  Now returns the output
+#  30.09.15  Added $useSystem parameter (optional)
+sub RunCommand
+{
+    my ($exe, $useSystem) = @_;
+    my $result = '';
+
+    print STDERR "$exe\n";
+    if(defined($useSystem) && $useSystem)
+    {
+        system("$exe");
+    }
+    else
+    {
+        $result = `$exe`;
+    }
+    return($result);
+}
+
+#*************************************************************************
+#> $dir = GetDir($file)
+#  --------------------
+#  Input:   string   $file    Full path to a file
+#  Return:  string            The directory (path) element of the filename
+#
+#  19.09.13  Original  By: ACRM
+sub GetDir
+{
+    my ($file) = @_;
+    $file =~ /(.*\/)/;  
+    my $dir = $1;
+    return($dir);
+}
+
+#*************************************************************************
+#> @result = sortArrayByArray($aTarget, $aKey)
+#  -------------------------------------------
+#  Input:   \data[]  $aTarget  Reference to array to be sorted
+#           \data[]  $aKey     Reference to array on which to sort
+#  Returns: data[]   @result   Sorted version of $aTarget
+#
+#  Sorts the $aTarget array based on the values in the $aKey array
+#
+#  17.07.14 Original   By: ACRM
+sub sortArrayByArray
+{
+    my ($aTarget, $aKey) = @_;
+    my @idx = sort {$$aKey[$a] <=> $$aKey[$b]} 0 .. $#$aKey;
+    my @target = @$aTarget[@idx];
+    return(@target);
+}
+
+#*************************************************************************
+#> void DEBUG($string)
+#  -------------------
+#  Input:   string   $string   A text string
+#
+#  Prints the string if $::debug is defined
+#
+#  17.07.14  Original   By: ACRM
+sub DEBUG
+{
+    my($string) = @_;
+
+    if(defined($::debug))
+    {
+        print STDERR "DEBUG: $string\n";
+    }
+}
+
+#*************************************************************************
+#>void PrettyPrint($fp, $sequence, $width, $append)
+# -------------------------------------------------
+# Input:   FILE   $fp         Reference to file handle
+#          string $sequence   Sequence to be printed
+#          int    $width      Width to print
+#          string $append     String to be appended to the sequence
+#
+# Prints a string breaking it up into $width chunks. The $append string
+# is appended to the main string before this is done.
+#
+# 21.07.14 Original   By: ACRM
+sub PrettyPrint
+{
+    my($fp, $sequence, $width, $append) = @_;
+    $sequence .= $append;
+
+    while($sequence ne '')
+    {
+        print $fp substr($sequence, 0, $width) . "\n";
+        $sequence = substr($sequence, $width);
+    }
+}
+
+
+#*************************************************************************
+#> void BuildPackage($package, $subdir, $aExe, $binDir, $dataDir, 
+#                    $dataDest, $postBuild)
+#  -------------------------------------------------------------------------
+#  Input:   string  $package    The gzipped tar file of the package
+#           string  $subdir     Subdirectory of the unpacked package
+#                               containing source code
+#           string  $aAxe       Reference to array of exectuables generated
+#           string  $binDir     Destination binary directory
+#           string  $dataDir    Data directory in unpacked package
+#           string  $dataDest   Destination data directory
+#
+#  Builds and installs a C package
+#
+#  19.09.13  Original  By: ACRM
+#  25.09.15  Now takes a reference to an array of executables
+#  01.10.15  Makes the destination directories if they don't exist
+#  02.10.15  Moved into util.pm
+#  13.09.16  Added checks that install of executable files has 
+#            actually worked
+#  24.03.17  Added $postBuild
+sub BuildPackage
+{
+    my ($package, $subdir, $aExe, $binDir, $dataDir, $dataDest, $postBuild) = @_;
+
+    # See if we need to do this - i.e. we don't have the files
+    # already
+    my $needsToRun = 0;
+    foreach my $exe (@$$aExe)
+    {
+        if(! -x "$binDir/$exe")
+        {
+            $needsToRun = 1;
+            last;
+        }
+    }
+    if(($dataDir ne '') && ( ! -d $dataDest))
+    {
+        $needsToRun = 1;
+    }
+
+    if($needsToRun)
+    {
+        util::RunCommand("tar -zxvf $package");
+        my $packageDir = $package;
+        $packageDir =~ s/.*\///;
+        $packageDir =~ s/\.tgz//;
+        util::RunCommand("cd $packageDir/$subdir; make");
+        foreach my $exe (@$$aExe)
+        {
+            util::RunCommand("mkdir -p $binDir") if(! -d $binDir);
+            util::RunCommand("cp $packageDir/$subdir/$exe $binDir");
+
+            if(! -e "$binDir/$exe")
+            {
+                Die("\nabYmod installation error: $binDir/$exe not created.\n       Compilation in $packageDir probably failed\n\n");
+            }
+        }
+        if($dataDir ne "")
+        {
+            util::RunCommand("mkdir -p $dataDest") if(! -d $dataDest);
+            util::RunCommand("cp -R $packageDir/$dataDir/* $dataDest");
+        }
+        if($postBuild ne "")
+        {
+            util::RunCommand($postBuild);
+        }
+        `rm -rf $packageDir`;
+    }
+    else
+    {
+        print STDERR "Skipped installation of $package - already installed\n";
+    }
+}
+
+
+#*************************************************************************
+#> BOOL CheckLibrary(@libs)
+#  ------------------------
+#  Input:    @libs   Array of library names to search for
+#  Returns:  BOOL    Found?
+#
+#  Checks the library paths to see if a specified library exists
+#
+#  13.09.16 Original   By: ACRM
+sub CheckLibrary
+{
+    my(@files) = @_;
+
+    my @dirs = qw(/usr/lib /usr/lib64 /usr/local/lib /usr/local/lib64);
+
+    return(CheckFilesExistInDirs(\@files, \@dirs));
+}
+
+
+#*************************************************************************
+#> BOOL CheckInclude(@incs)
+#  ------------------------
+#  Input:    @libs   Array of include file names to search for
+#  Returns:  BOOL    Found?
+#
+#  Checks the system include paths to see if a specified library exists
+#
+#  13.09.16 Original   By: ACRM
+sub CheckInclude
+{
+    my(@files) = @_;
+
+    my @dirs = qw(/usr/include /usr/local/include);
+
+    return(CheckFilesExistInDirs(\@files, \@dirs));
+}
+
+
+#*************************************************************************
+# BOOL CheckFilesExistInDirs(\@FilesToCheck, \@DirsToSearch)
+# ----------------------------------------------------------
+# Input:    \@FilesToCheck  Ref to list of files we are looking for
+#           \@DirsToSearch  Ref to list of directories to search
+#
+# Checks if the specified files exist in any of the specified directories.
+# These are searched recursively.
+#
+#  13.09.16 Original   By: ACRM
+sub CheckFilesExistInDirs
+{
+    my($aFiles, $aDirs) = @_;
+
+    foreach my $inFile (@$aFiles)
+    {
+        my $found = 0;
+
+        foreach my $location (@$aDirs)
+        {
+            if(!$found)
+            {
+                my @fileList = GetRecursiveFileList($location);
+
+                foreach my $file (@fileList)
+                {
+                    
+                    if($file =~ /$inFile$/)
+                    {
+                        $found = 1;
+                        last;
+                    }
+                }
+            }
+        }
+
+        if(!$found)
+        {
+            return(0);
+        }
+    }
+
+    return(1);
+
+}
+
+
+#*************************************************************************
+#> @files = GetRecursiveFileList($location)
+#  ----------------------------------------
+#  Input:    $location   Top level directory
+#  Returns:              List of full file paths in that directory
+#
+#  Builds a list of all files below a given direcotory - uses 'ls -R' to
+#  obtain a recursive list
+#
+#  13.09.16 Original   By: ACRM
+sub GetRecursiveFileList
+{
+    my($location) = @_;
+    my $stem = '';
+    my @files = ();
+    my $dirTree = `\\ls -R $location 2>/dev/null`;
+    my @records = split(/\n/, $dirTree);
+    foreach my $record (@records)
+    {
+        $record =~ s/\s+$//;    # Remove trailing whitespace
+        if(length($record))
+        {
+            if($record =~ /(.*)\:/)
+            {
+                $stem = $1 . '/';
+            }
+            else
+            {
+                push @files, "$stem$record";
+            }
+        }
+    }
+
+    return(@files);
 }
 
 1;
