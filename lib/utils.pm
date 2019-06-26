@@ -737,7 +737,7 @@ sub BuildPackage
 
             if(! -e "$binDir/$exe")
             {
-                Die("\nabYmod installation error: $binDir/$exe not created.\n       Compilation in $packageDir probably failed\n\n");
+                mydie("\nabYmod installation error: $binDir/$exe not created.\n       Compilation in $packageDir probably failed\n\n");
             }
         }
         if($dataDir ne "")
