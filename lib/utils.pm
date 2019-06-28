@@ -879,4 +879,34 @@ sub GetRecursiveFileList
     return(@files);
 }
 
+#*************************************************************************
+#> ($bad, $msg) = CheckModulesInstalled(@modules)
+#  ----------------------------------------------
+#  Input:    @modules   Array of module names
+#  Returns:  $bad       >0: the number of missing modules
+#                        0: all modules found
+#            $msg       Names of missing modules
+#
+#  Checks whether given mmodules are installed.
+#
+#  28.06.19 Original   By: ACRM
+sub CheckModulesInstalled
+{
+    my(@modules) = @_;
+    
+    my $msg = '';
+    my $bad = 0;
+    for(@modules)
+    {
+        eval "use $_";
+        if($@)
+        {
+            $msg .= "-  $_\n";
+            $bad++;
+        }
+    }
+
+    return($bad, $msg);
+}
+        
 1;
