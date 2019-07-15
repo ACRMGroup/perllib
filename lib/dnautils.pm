@@ -129,6 +129,14 @@ sub reverseComplement
     $seq =~ s/g/c/g;
     $seq =~ s/x/g/g;
 
+    $seq =~ s/A/X/g;
+    $seq =~ s/T/A/g;
+    $seq =~ s/X/T/g;
+
+    $seq =~ s/C/X/g;
+    $seq =~ s/G/C/g;
+    $seq =~ s/X/G/g;
+
     return($seq);
 }
 
@@ -286,3 +294,4 @@ sub IsDNA
     return(1);
 }
 
+1;
