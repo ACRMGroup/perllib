@@ -4,7 +4,7 @@ package utils;
 #   Program:    
 #   File:       utils.pm
 #   
-#   Version:    V1.2
+#   Version:    V1.3
 #   Date:       26.06.19
 #   Function:   
 #   
@@ -50,6 +50,7 @@ package utils;
 #   V1.0   01.05.15 Original   By: ACRM
 #   V1.1   17.05.16 Added intellisplit()
 #   V1.2   26.06.19 Added various functions from abYmod util.pm
+#   V1.3   15.08.19 Added CreateTempFileName()
 #
 #*************************************************************************
 use File::Basename;
@@ -908,5 +909,14 @@ sub CheckModulesInstalled
 
     return($bad, $msg);
 }
+
+#*************************************************************************
+sub CreateTempFileName
+{
+    my ($stem) = @_;
+    my $fnm = "/var/tmp/${stem}_" . $$ . time();
+    return($fnm);
+}
+
         
 1;
