@@ -4,7 +4,7 @@ package utils;
 #   Program:    
 #   File:       utils.pm
 #   
-#   Version:    V1.3
+#   Version:    V1.4
 #   Date:       26.06.19
 #   Function:   
 #   
@@ -51,6 +51,8 @@ package utils;
 #   V1.1   17.05.16 Added intellisplit()
 #   V1.2   26.06.19 Added various functions from abYmod util.pm
 #   V1.3   15.08.19 Added CreateTempFileName()
+#   V1.4   25.07.21 BuildPackage now takes .tjz and .tar.gz as well
+#                   as .tgz
 #
 #*************************************************************************
 use File::Basename;
@@ -726,10 +728,12 @@ sub BuildPackage
 
     if($needsToRun)
     {
-        utils::RunCommand("tar -zxvf $package");
+        utils::RunCommand("tar xvf $package");
         my $packageDir = $package;
         $packageDir =~ s/.*\///;
         $packageDir =~ s/\.tgz//;
+        $packageDir =~ s/\.tar\.gz//;
+        $packageDir =~ s/\.tjz//;
         utils::RunCommand("cd $packageDir/$subdir; make");
         foreach my $exe (@$$aExe)
         {
