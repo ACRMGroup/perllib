@@ -4,11 +4,11 @@ package translate;
 #   Program:    
 #   File:       translate.pm
 #   
-#   Version:    V1.0
-#   Date:       17.03.17
+#   Version:    V1.1
+#   Date:       05.10.22
 #   Function:   
 #   
-#   Copyright:  (c) Dr. Andrew C. R. Martin, UCL, 2017
+#   Copyright:  (c) Dr. Andrew C. R. Martin, UCL, 2017-22
 #   Author:     Dr. Andrew C. R. Martin
 #   Address:    Institute of Structural and Molecular Biology
 #               Division of Biosciences
@@ -48,6 +48,7 @@ package translate;
 #   Revision History:
 #   =================
 #   V1.0   17.03.17 Original   By: ACRM
+#   V1.1   05.10.22 Corrected translation hash!
 #
 #*************************************************************************
 %translateHash = (
@@ -93,8 +94,8 @@ package translate;
     'acc' => 'T',
     'aca' => 'T',
     'acg' => 'T',
-    'aat' => 'D',
-    'aac' => 'D',
+    'aat' => 'N',
+    'aac' => 'N',
     'aaa' => 'K',
     'aag' => 'K',
     'agt' => 'S',
